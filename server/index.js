@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const connectDB = require('./config/database');
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,10 +46,16 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Import routes
+const authRoutes = require('./routes/auth');
+
 // API routes
 app.get('/api', (req, res) => {
   res.json({ message: 'CashFlowX API' });
 });
+
+// Auth routes
+app.use('/api/auth', authRoutes);
 
 // Start server
 app.listen(PORT, () => {
