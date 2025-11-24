@@ -11,7 +11,7 @@ import { validationSchemas } from '@/utils/validation';
 import { Spacing } from '@/constants/theme';
 import { router } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { signInThunk } from '@/store/slices/auth.thunk';
+import { signInThunk } from '@/store/user/user.thunk';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 

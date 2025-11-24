@@ -11,7 +11,7 @@ import { validationSchemas } from '@/utils/validation';
 import { Spacing } from '@/constants/theme';
 import { router } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { forgotPasswordThunk } from '@/store/slices/auth.thunk';
+import { forgotPasswordThunk } from '@/store/user/user.thunk';
 import { useToast } from '@/hooks/use-toast';
 
 // Forgot password form validation schema

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 const connectDB = require('./config/database');
 
@@ -41,6 +42,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Health check route
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
@@ -48,6 +52,7 @@ app.get('/health', (req, res) => {
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 
 // API routes
 app.get('/api', (req, res) => {
@@ -56,6 +61,9 @@ app.get('/api', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// User routes (require authentication)
+app.use('/api/user', userRoutes);
 
 // Start server
 app.listen(PORT, () => {

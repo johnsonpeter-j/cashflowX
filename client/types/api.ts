@@ -46,3 +46,16 @@ export interface VerifyTokenRequest {
   token: string;
 }
 
+// Update Profile Request
+export interface UpdateProfileRequest {
+  name?: string;
+  profileImage?: File | Blob | null;
+}
+
+// Change Password Request
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+

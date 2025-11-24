@@ -31,25 +31,25 @@ export function ProfilePopover({ visible, onClose, anchorPosition }: ProfilePopo
 
   const handleProfilePress = () => {
     onClose();
-    router.push('/(main-screen)/settings');
+    router.push('/(main-screen)/profile');
   };
 
   const handleChangePasswordPress = () => {
     onClose();
-    // Navigate to change password screen (you can create this later)
-    toast.showInfo('Change password feature coming soon');
+    router.push('/(main-screen)/change-password');
   };
 
   const handleLogoutPress = async () => {
     try {
-      await signOut();
+      onClose(); // Close popover first
+      await signOut(); // Clear AsyncStorage and Redux state
       toast.showSuccess('Signed out successfully');
+      // Use replace to redirect (not navigate) - this clears navigation history and state
       router.replace('/(auth)/');
     } catch (error) {
       console.error('Sign out error:', error);
       toast.showError('Failed to sign out. Please try again.');
     }
-    onClose();
   };
 
   const menuItems = [

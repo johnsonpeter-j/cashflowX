@@ -9,7 +9,7 @@ import {
   User,
 } from '@/types/api';
 import { API_BASE_URL } from '@/types/api';
-import { forgotPasswordThunk, signInThunk, signUpThunk, verifyTokenThunk } from './auth.thunk';
+import { forgotPasswordThunk, signInThunk, signUpThunk, verifyTokenThunk, updateProfileThunk, changePasswordThunk } from './user.thunk';
 
 interface AuthState {
   user: User | null;
@@ -121,6 +121,37 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload || 'Token verification failed';
         state.isAuthenticated = false;
+      });
+
+    // Update Profile
+    builder
+      .addCase(updateProfileThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProfileThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(updateProfileThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to update profile';
+      });
+
+    // Change Password
+    builder
+      .addCase(changePasswordThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordThunk.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(changePasswordThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to change password';
       });
   },
 });

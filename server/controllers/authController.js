@@ -2,6 +2,27 @@ const User = require('../models/User.js');
 const jwt = require('jsonwebtoken');
 const { sendTempPasswordEmail } = require('../utils/email');
 
+// Helper function to get full URL for profile image
+const getFullProfileImageUrl = (profileImageUrl) => {
+  if (!profileImageUrl) return null;
+  
+  // If already a full URL (starts with http), return as is
+  if (profileImageUrl.startsWith('http://') || profileImageUrl.startsWith('https://')) {
+    return profileImageUrl;
+  }
+  
+  // Get BASE_URL from environment variable
+  const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+  
+  // Remove trailing slash from BASE_URL if present
+  const baseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+  
+  // Ensure profileImageUrl starts with /
+  const imagePath = profileImageUrl.startsWith('/') ? profileImageUrl : `/${profileImageUrl}`;
+  
+  return `${baseUrl}${imagePath}`;
+};
+
 // Generate JWT token
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'your-secret-key-change-in-production', {
@@ -52,7 +73,7 @@ exports.signIn = async (req, res) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          profileImageUrl: user.profileImageUrl || null,
+          profileImageUrl: getFullProfileImageUrl(user.profileImageUrl),
         },
         token,
       },
@@ -117,7 +138,7 @@ exports.signUp = async (req, res) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          profileImageUrl: user.profileImageUrl || null,
+          profileImageUrl: getFullProfileImageUrl(user.profileImageUrl),
         },
         token,
       },
@@ -253,7 +274,7 @@ exports.verifyToken = async (req, res) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          profileImageUrl: user.profileImageUrl || null,
+          profileImageUrl: getFullProfileImageUrl(user.profileImageUrl),
         },
         token,
       },

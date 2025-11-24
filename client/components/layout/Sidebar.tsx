@@ -75,7 +75,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
         {/* Backdrop */}
         {isOpen && (
           <TouchableOpacity
-            style={[styles.backdrop, { top: 64 }]} // Below AppBar
+            style={styles.backdrop} // Full screen backdrop
             activeOpacity={1}
             onPress={onClose}
           />
@@ -91,9 +91,11 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             },
           ]}
         >
-          <View style={styles.sidebarContent}>
+          <View style={styles.mobileSidebarContent}>
+            {/* AppBar space for mobile - to push content below AppBar */}
+            <View style={{ height: 64 }} />
             {/* Menu Items */}
-            <View style={styles.menuItems}>
+            <View style={styles.mobileMenuItems}>
               {menuItems.map((item) => {
                 const active = isActive(item.route);
                 return (
@@ -233,6 +235,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 const styles = StyleSheet.create({
   backdrop: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
@@ -244,12 +247,14 @@ const styles = StyleSheet.create({
   },
   mobileSidebar: {
     position: 'absolute',
-    top: 64, // Below AppBar for mobile drawer
+    top: 0, // Start from top of screen for mobile drawer
     left: 0,
     bottom: 0,
     zIndex: 999,
     width: Dimensions.get('window').width * 0.8,
     maxWidth: 320,
+    // Ensure background is fully opaque and covers entire area
+    overflow: 'hidden',
   },
   desktopSidebar: {
     height: '100%',
@@ -258,6 +263,10 @@ const styles = StyleSheet.create({
   sidebarContent: {
     flex: 1,
     paddingTop: Spacing.lg,
+  },
+  mobileSidebarContent: {
+    flex: 1,
+    paddingTop: 0, // No top padding for mobile - no toggle button, menu starts immediately
   },
   toggleButtonContainer: {
     flexDirection: 'row',
@@ -314,6 +323,11 @@ const styles = StyleSheet.create({
   menuItems: {
     flex: 1,
     paddingHorizontal: Spacing.sm,
+  },
+  mobileMenuItems: {
+    flex: 1,
+    paddingHorizontal: Spacing.sm,
+    paddingTop: 0, // No top padding for mobile - menu starts immediately
   },
   menuItem: {
     flexDirection: 'row',

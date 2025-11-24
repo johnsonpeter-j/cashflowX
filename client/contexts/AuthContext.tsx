@@ -2,8 +2,8 @@ import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthResponse } from '@/types/api';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setAuth, clearAuth, updateUser as updateUserAction } from '@/store/slices/authSlice';
-import { verifyTokenThunk } from '@/store/slices/auth.thunk';
+import { setAuth, clearAuth, updateUser as updateUserAction } from '@/store/user/user.slice';
+import { verifyTokenThunk } from '@/store/user/user.thunk';
 
 interface AuthContextType {
   user: User | null;
@@ -110,8 +110,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // Clear AsyncStorage first
     await clearStoredAuth();
+    // Then clear Redux state
     dispatch(clearAuth());
+    // Note: This ensures all local state is cleared before redirect
   };
 
   const updateUser = (updatedUser: User) => {

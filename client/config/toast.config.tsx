@@ -142,6 +142,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    alignSelf: 'flex-end',
+    marginRight: Spacing.md,
+    maxWidth: '90%',
   },
   toastDark: {
     backgroundColor: Colors.dark.card,

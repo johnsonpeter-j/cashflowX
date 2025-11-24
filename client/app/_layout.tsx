@@ -68,7 +68,7 @@ export default function RootLayout() {
       <ThemeProvider>
         <AuthProvider>
           <RootLayoutNav />
-          <Toast config={toastConfig} />
+          <Toast config={toastConfig} position="top" topOffset={60} />
         </AuthProvider>
       </ThemeProvider>
     </Provider>

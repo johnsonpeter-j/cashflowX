@@ -80,7 +80,8 @@ export function useForm<T extends Record<string, any>>({
 
   const handleSubmit = useCallback(async (e?: any) => {
     if (e) {
-      e.preventDefault();
+      e.preventDefault?.();
+      e.stopPropagation?.();
     }
 
     // Mark all fields as touched

@@ -34,7 +34,9 @@ export default function MainScreenLayout() {
         <Stack.Screen name="subcategory" />
         <Stack.Screen name="budget" />
         <Stack.Screen name="settings" />
-      </Stack>
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="change-password" />
+    </Stack>
     </MainLayout>
   );
 }

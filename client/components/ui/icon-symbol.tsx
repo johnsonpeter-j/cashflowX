@@ -35,6 +35,7 @@ const MAPPING = {
   'person': 'person',
   'lock': 'lock',
   'logout': 'logout',
+  'camera': 'camera-alt',
 } as IconMapping;
 
 /**
