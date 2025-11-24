@@ -14,7 +14,7 @@ export default function SettingsScreen() {
     try {
       await signOut();
       toast.showSuccess('Signed out successfully');
-      router.replace('/(auth)/');
+      router.replace('/(auth)' as any);
     } catch (error) {
       console.error('Sign out error:', error);
       toast.showError('Failed to sign out. Please try again.');
@@ -26,7 +26,7 @@ export default function SettingsScreen() {
       <ThemedText type="heading1">Settings</ThemedText>
       {user && (
         <View style={styles.userInfo}>
-          <ThemedText type="defaultSemiBold">Name: {user.name}</ThemedText>
+          <ThemedText type="default" variant="semibold">Name: {user.name}</ThemedText>
           <ThemedText type="secondary">Email: {user.email}</ThemedText>
         </View>
       )}
