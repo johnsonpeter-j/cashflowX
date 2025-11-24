@@ -5,12 +5,16 @@ import { ThemedText } from '../themed-text';
 import { IconSymbol } from './icon-symbol';
 import { Colors } from '@/constants/theme';
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  compact?: boolean;
+}
+
+export function ThemeToggle({ compact = false }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, compact && styles.compact]}
       onPress={toggleTheme}
       activeOpacity={0.7}
     >
@@ -19,9 +23,11 @@ export function ThemeToggle() {
         size={24}
         color={theme === 'dark' ? Colors.dark.icon : Colors.light.icon}
       />
-      <ThemedText style={styles.text} variant="medium">
-        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-      </ThemedText>
+      {!compact && (
+        <ThemedText style={styles.text} variant="medium">
+          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        </ThemedText>
+      )}
     </TouchableOpacity>
   );
 }
@@ -32,6 +38,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 8,
+  },
+  compact: {
+    padding: 4,
   },
   text: {
     fontSize: 14,

@@ -27,7 +27,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ThemedView style={[globalStyles.container, isDark && globalStyles.containerDark, styles.container]}>
+    <View style={styles.container}>
       <View style={styles.content}>
         <ThemedText type="heading1" style={styles.title}>
           Dashboard
@@ -50,13 +50,14 @@ export default function DashboardScreen() {
           />
         </View>
       </View>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: Spacing.lg,
   },
   content: {
     flex: 1,

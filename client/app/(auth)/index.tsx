@@ -11,7 +11,7 @@ import { validationSchemas } from '@/utils/validation';
 import { Spacing } from '@/constants/theme';
 import { router } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { signInThunk } from '@/store/slices/authSlice';
+import { signInThunk } from '@/store/slices/auth.thunk';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,12 +39,15 @@ export default function SignInScreen() {
     },
     validationSchema: signInSchema,
     onSubmit: async (values) => {
+      console.log('Form submitted with values:', { email: values.email, password: '***' });
       try {
+        console.log('Dispatching signInThunk...');
         const result = await dispatch(signInThunk({
           email: values.email,
           password: values.password,
         })).unwrap();
 
+        console.log('Sign in successful, result:', result);
         if (result) {
           await signIn(result);
           toast.showSuccess('Sign in successful!');

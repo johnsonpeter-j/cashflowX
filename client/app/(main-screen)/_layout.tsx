@@ -2,6 +2,7 @@ import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { View, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/themed-view';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 export default function MainScreenLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,15 +22,20 @@ export default function MainScreenLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen 
-        name="dashboard" 
-        options={{ 
+    <MainLayout>
+      <Stack
+        screenOptions={{
           headerShown: false,
-          title: 'Dashboard',
-        }} 
-      />
-    </Stack>
+        }}
+      >
+        <Stack.Screen name="dashboard" />
+        <Stack.Screen name="transaction" />
+        <Stack.Screen name="category" />
+        <Stack.Screen name="subcategory" />
+        <Stack.Screen name="budget" />
+        <Stack.Screen name="settings" />
+      </Stack>
+    </MainLayout>
   );
 }
 

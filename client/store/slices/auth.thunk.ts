@@ -7,7 +7,12 @@ export const signInThunk = createAsyncThunk<
   { rejectValue: string }
 >('auth/signIn', async (data, { rejectWithValue }) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/sign-in`, {
+    console.log('signInThunk called with:', { email: data.email, password: '***' });
+    console.log('API_BASE_URL:', API_BASE_URL);
+    const url = `${API_BASE_URL}/api/auth/sign-in`;
+    console.log('Making request to:', url);
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -15,16 +20,21 @@ export const signInThunk = createAsyncThunk<
       body: JSON.stringify(data),
     });
 
+    console.log('Response status:', response.status);
     const result = await response.json();
+    console.log('Response data:', result);
 
     if (!response.ok) {
+      console.log('Response not OK, rejecting with:', result.message || 'Sign in failed');
       return rejectWithValue(result.message || 'Sign in failed');
     }
 
     if (!result.data) {
+      console.log('No data in response, rejecting');
       return rejectWithValue('Invalid response from server');
     }
 
+    console.log('Sign in successful, returning data');
     return result.data;
   } catch (error) {
     console.error('Sign in error:', error);
