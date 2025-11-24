@@ -11,8 +11,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configure allowed origins
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+const allowedOrigins = process.env.CLIENT_URL
+  ? [process.env.CLIENT_URL]
   : [
       'http://localhost:3000',
       'http://localhost:19006', // Expo default
