@@ -38,7 +38,7 @@ export function TextInput({ label, error, required, style, onFocus, onBlur, plac
   return (
     <View style={styles.container}>
       {label && (
-        <ThemedText style={[responsiveStyles.label, isDark && responsiveStyles.labelDark]}>
+        <ThemedText style={[responsiveStyles.label, isDark && responsiveStyles.labelDark, styles.label]}>
           {label}
           {required && <ThemedText style={[responsiveStyles.label, isDark && responsiveStyles.labelDark, { color: Colors.light.error }]}> *</ThemedText>}
         </ThemedText>
@@ -84,6 +84,9 @@ export function TextInput({ label, error, required, style, onFocus, onBlur, plac
 const styles = StyleSheet.create({
   container: {
     marginBottom: 0,
+  },
+  label: {
+    marginBottom: 4,
   },
   inputWrapper: {
     position: 'relative',

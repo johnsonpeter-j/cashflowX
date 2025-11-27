@@ -59,3 +59,45 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
+// Category Types
+export type CategoryType = 'INCOME' | 'EXPENSE';
+
+export interface Category {
+  _id: string;
+  name: string;
+  description: string;
+  type: CategoryType;
+  createdBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Create Category Request
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  type: CategoryType;
+}
+
+// Update Category Request
+export interface UpdateCategoryRequest {
+  name?: string;
+  description?: string;
+  type?: CategoryType;
+}
+
+// Category Response
+export interface CategoryResponse {
+  category: Category;
+}
+
+// Categories Response
+export interface CategoriesResponse {
+  categories: Category[];
+  count: number;
+}
+

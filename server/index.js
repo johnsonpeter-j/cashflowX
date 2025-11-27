@@ -53,6 +53,7 @@ app.get('/health', (req, res) => {
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const categoryRoutes = require('./routes/category');
 
 // API routes
 app.get('/api', (req, res) => {
@@ -64,6 +65,9 @@ app.use('/api/auth', authRoutes);
 
 // User routes (require authentication)
 app.use('/api/user', userRoutes);
+
+// Category routes (require authentication)
+app.use('/api/category', categoryRoutes);
 
 // Start server
 app.listen(PORT, () => {

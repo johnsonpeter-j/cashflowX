@@ -36,6 +36,8 @@ const MAPPING = {
   'lock': 'lock',
   'logout': 'logout',
   'camera': 'camera-alt',
+  'plus': 'add',
+  'plus.circle.fill': 'add-circle',
 } as IconMapping;
 
 /**
