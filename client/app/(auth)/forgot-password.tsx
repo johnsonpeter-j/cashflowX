@@ -1,128 +1,134 @@
-import { ScrollView, StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Button, TextInput } from '@/components/ui';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { globalStyles } from '@/styles/global';
-import { useResponsive } from '@/hooks/use-responsive';
-import { useForm } from '@/hooks/use-form';
-import { z } from 'zod';
-import { validationSchemas } from '@/utils/validation';
-import { Spacing } from '@/constants/theme';
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
 import { router } from 'expo-router';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { AuthInput } from '@/components/auth-input';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { forgotPasswordThunk } from '@/store/user/user.thunk';
-import { useToast } from '@/hooks/use-toast';
-
-// Forgot password form validation schema
-const forgotPasswordSchema = z.object({
-  email: validationSchemas.email,
-});
-
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+import { forgotPassword } from '@/store/auth/auth.thunk';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
-  const colorScheme = useColorScheme();
-  const { isMobile, isTablet, isLaptop } = useResponsive();
-  const isDark = colorScheme === 'dark';
+  const [email, setEmail] = useState('');
+  const [errors, setErrors] = useState<{ email?: string }>({});
+
   const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state) => state.auth);
-  const toast = useToast();
+  const { forgotPasswordApiState } = useAppSelector((state) => state.auth);
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
 
-  const { values, errors, isSubmitting, setValue, handleSubmit, getFieldError } = useForm<ForgotPasswordFormData>({
-    initialValues: {
-      email: '',
-    },
-    validationSchema: forgotPasswordSchema,
-    onSubmit: async (values) => {
-      try {
-        const result = await dispatch(forgotPasswordThunk({
-          email: values.email,
-        })).unwrap();
+  const validate = () => {
+    const newErrors: { email?: string } = {};
 
-        if (result && result.success) {
-          toast.showSuccess(
-            result.message || 'A temporary password has been sent to your email address. Please check your inbox.',
-            {
-              onHide: () => router.back(),
-            }
-          );
-        }
-      } catch (error) {
-        console.error('Forgot password error:', error);
-        toast.showError(typeof error === 'string' ? error : 'An error occurred. Please check your connection and try again.');
-      }
-    },
-  });
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email is invalid';
+    }
 
-  // Responsive container width
-  const containerMaxWidth = isMobile ? '100%' : isTablet ? 500 : 450;
-  const horizontalPadding = isMobile ? Spacing.md : isTablet ? Spacing.lg : Spacing.xl;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleForgotPassword = async () => {
+    if (!validate()) return;
+
+    try {
+      await dispatch(forgotPassword({ email })).unwrap();
+      // Optionally navigate back or show success message
+      setTimeout(() => {
+        router.back();
+      }, 2000);
+    } catch (error) {
+      // Error is handled by toast in thunk
+    }
+  };
 
   return (
-    <ThemedView style={[globalStyles.container, isDark && globalStyles.containerDark]}>
+    <ThemedView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingHorizontal: horizontalPadding },
-          ]}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.container, { maxWidth: containerMaxWidth, alignSelf: 'center', width: '100%' }]}>
-            {/* Header Section */}
-            <View style={styles.header}>
-              <ThemedText type="heading1" style={[styles.title, globalStyles.marginBottomSm]}>
-                Forgot Password
-              </ThemedText>
-              <ThemedText type="secondary" style={styles.subtitle}>
-                Enter your email address and we'll send you a temporary password
-              </ThemedText>
-            </View>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
 
-            {/* Form Card */}
-            <ThemedView style={[globalStyles.card, isDark && globalStyles.cardDark, styles.formCard]}>
-              <TextInput
+          <View style={styles.formContainer}>
+            <ThemedText type="title" style={styles.title}>
+              Forgot Password?
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Enter your email address and we'll send you a link to reset your password.
+            </ThemedText>
+
+            <View style={styles.inputContainer}>
+              <AuthInput
                 label="Email"
                 placeholder="Enter your email"
-                required
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (errors.email) setErrors({ ...errors, email: undefined });
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                value={values.email}
-                onChangeText={(text) => setValue('email', text)}
-                error={getFieldError('email')}
+                error={errors.email}
+                showValidIcon={true}
               />
+            </View>
 
-              {/* Send Temporary Password Button */}
-              <Button
-                title={isSubmitting || isLoading ? 'Sending...' : 'Send Temporary Password'}
-                fullWidth
-                disabled={isSubmitting || isLoading}
-                loading={isSubmitting || isLoading}
-                onPress={handleSubmit}
-                style={[globalStyles.marginTopSm, globalStyles.marginBottomMd]}
-              />
-            </ThemedView>
+            <TouchableOpacity
+              style={[
+                styles.resetButton,
+                {
+                  backgroundColor: theme.tint,
+                  opacity: forgotPasswordApiState.isLoading ? 0.7 : 1,
+                },
+              ]}
+              onPress={handleForgotPassword}
+              disabled={forgotPasswordApiState.isLoading}
+            >
+              {forgotPasswordApiState.isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <ThemedText
+                  style={[
+                    styles.resetButtonText,
+                    { color: colorScheme === 'dark' ? '#000' : '#FFF' },
+                  ]}
+                >
+                  Send Reset Link
+                </ThemedText>
+              )}
+            </TouchableOpacity>
 
-            {/* Back to Sign In Link */}
-            <View style={styles.signInContainer}>
-              <ThemedText type="secondary" style={styles.signInText}>
-                Remember your password?{' '}
-              </ThemedText>
-              <Button
-                title="Sign In"
-                variant="text"
-                onPress={() => {
-                  router.back();
-                }}
-                style={styles.signInButton}
-              />
+            <View style={styles.backContainer}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <ThemedText style={styles.backText}>
+                  ← Back to Sign In
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -132,44 +138,63 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingVertical: Spacing.xl,
+    padding: 20,
   },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  header: {
-    marginBottom: Spacing.xl,
+  logoContainer: {
     alignItems: 'center',
+    marginBottom: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+  },
+  formContainer: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
+    fontSize: 16,
+    marginBottom: 32,
     textAlign: 'center',
+    opacity: 0.7,
   },
-  formCard: {
-    marginBottom: Spacing.lg,
+  inputContainer: {
+    width: '100%',
   },
-  signInContainer: {
-    flexDirection: 'row',
+  resetButton: {
+    height: 50,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    flexWrap: 'wrap',
+    marginBottom: 24,
   },
-  signInText: {
-    // Font size handled by ThemedText component
+  resetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
-  signInButton: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: 0,
-    minHeight: 0,
+  backContainer: {
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: 14,
+    opacity: 0.8,
   },
 });
+
 

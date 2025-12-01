@@ -54,6 +54,9 @@ app.get('/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const categoryRoutes = require('./routes/category');
+const subCategoryRoutes = require('./routes/subCategory');
+const budgetRoutes = require('./routes/budget');
+const transactionRoutes = require('./routes/transaction');
 
 // API routes
 app.get('/api', (req, res) => {
@@ -68,6 +71,15 @@ app.use('/api/user', userRoutes);
 
 // Category routes (require authentication)
 app.use('/api/category', categoryRoutes);
+
+// Sub-category routes (require authentication)
+app.use('/api/sub-category', subCategoryRoutes);
+
+// Budget routes (require authentication)
+app.use('/api/budget', budgetRoutes);
+
+// Transaction routes (require authentication)
+app.use('/api/transaction', transactionRoutes);
 
 // Start server
 app.listen(PORT, () => {

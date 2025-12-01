@@ -1,150 +1,184 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { Category } from '@/types/api';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
-  createCategoryThunk,
-  getAllCategoriesThunk,
-  getCategoryByIdThunk,
-  updateCategoryThunk,
-  deleteCategoryThunk,
-} from './category.thunk';
+  createCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+} from "./category.thunk";
+import { CategoryState, Category } from "./category.types";
 
-interface CategoryState {
-  categories: Category[];
-  currentCategory: Category | null;
-  isLoading: boolean;
-  error: string | null;
-  totalCount: number;
-}
-
+// Initial state
 const initialState: CategoryState = {
   categories: [],
-  currentCategory: null,
-  isLoading: false,
-  error: null,
-  totalCount: 0,
+  selectedCategory: null,
+  createCategoryApiState: {
+    isLoading: false,
+    error: null,
+    lastFetched: null,
+  },
+  getAllCategoriesApiState: {
+    isLoading: false,
+    error: null,
+    lastFetched: null,
+  },
+  getCategoryByIdApiState: {
+    isLoading: false,
+    error: null,
+    lastFetched: null,
+  },
+  updateCategoryApiState: {
+    isLoading: false,
+    error: null,
+    lastFetched: null,
+  },
+  deleteCategoryApiState: {
+    isLoading: false,
+    error: null,
+    lastFetched: null,
+  },
 };
 
+// Category slice
 const categorySlice = createSlice({
   name: 'category',
   initialState,
   reducers: {
-    clearCurrentCategory: (state) => {
-      state.currentCategory = null;
+    clearCreateCategoryError: (state) => {
+      state.createCategoryApiState.error = null;
     },
-    clearError: (state) => {
-      state.error = null;
+    clearGetAllCategoriesError: (state) => {
+      state.getAllCategoriesApiState.error = null;
     },
-    clearCategories: (state) => {
-      state.categories = [];
-      state.totalCount = 0;
+    clearGetCategoryByIdError: (state) => {
+      state.getCategoryByIdApiState.error = null;
+    },
+    clearUpdateCategoryError: (state) => {
+      state.updateCategoryApiState.error = null;
+    },
+    clearDeleteCategoryError: (state) => {
+      state.deleteCategoryApiState.error = null;
+    },
+    setSelectedCategory: (state, action: PayloadAction<Category | null>) => {
+      state.selectedCategory = action.payload;
+    },
+    clearSelectedCategory: (state) => {
+      state.selectedCategory = null;
     },
   },
   extraReducers: (builder) => {
     // Create Category
     builder
-      .addCase(createCategoryThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(createCategory.pending, (state) => {
+        state.createCategoryApiState.isLoading = true;
+        state.createCategoryApiState.error = null;
       })
-      .addCase(createCategoryThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.categories.unshift(action.payload.category); // Add to beginning
-        state.totalCount += 1;
-        state.currentCategory = action.payload.category;
-        state.error = null;
+      .addCase(createCategory.fulfilled, (state, action) => {
+        state.createCategoryApiState.isLoading = false;
+        state.createCategoryApiState.lastFetched = Date.now();
+        state.categories.unshift(action.payload); // Add to beginning of array
+        state.createCategoryApiState.error = null;
       })
-      .addCase(createCategoryThunk.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Failed to create category';
+      .addCase(createCategory.rejected, (state, action) => {
+        state.createCategoryApiState.isLoading = false;
+        state.createCategoryApiState.error = action.payload as string;
       });
 
     // Get All Categories
     builder
-      .addCase(getAllCategoriesThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(getAllCategories.pending, (state) => {
+        state.getAllCategoriesApiState.isLoading = true;
+        state.getAllCategoriesApiState.error = null;
       })
-      .addCase(getAllCategoriesThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.categories = action.payload.categories;
-        state.totalCount = action.payload.count;
-        state.error = null;
+      .addCase(getAllCategories.fulfilled, (state, action) => {
+        state.getAllCategoriesApiState.isLoading = false;
+        state.getAllCategoriesApiState.lastFetched = Date.now();
+        state.categories = action.payload;
+        state.getAllCategoriesApiState.error = null;
       })
-      .addCase(getAllCategoriesThunk.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch categories';
+      .addCase(getAllCategories.rejected, (state, action) => {
+        state.getAllCategoriesApiState.isLoading = false;
+        state.getAllCategoriesApiState.error = action.payload as string;
       });
 
     // Get Category By ID
     builder
-      .addCase(getCategoryByIdThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(getCategoryById.pending, (state) => {
+        state.getCategoryByIdApiState.isLoading = true;
+        state.getCategoryByIdApiState.error = null;
       })
-      .addCase(getCategoryByIdThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.currentCategory = action.payload.category;
-        state.error = null;
+      .addCase(getCategoryById.fulfilled, (state, action) => {
+        state.getCategoryByIdApiState.isLoading = false;
+        state.getCategoryByIdApiState.lastFetched = Date.now();
+        state.selectedCategory = action.payload;
+        state.getCategoryByIdApiState.error = null;
+        // Update category in list if it exists
+        const index = state.categories.findIndex(cat => cat._id === action.payload._id);
+        if (index !== -1) {
+          state.categories[index] = action.payload;
+        }
       })
-      .addCase(getCategoryByIdThunk.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch category';
+      .addCase(getCategoryById.rejected, (state, action) => {
+        state.getCategoryByIdApiState.isLoading = false;
+        state.getCategoryByIdApiState.error = action.payload as string;
       });
 
     // Update Category
     builder
-      .addCase(updateCategoryThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(updateCategory.pending, (state) => {
+        state.updateCategoryApiState.isLoading = true;
+        state.updateCategoryApiState.error = null;
       })
-      .addCase(updateCategoryThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-        const updatedCategory = action.payload.category;
-        // Update in categories array
-        const index = state.categories.findIndex(
-          (cat) => cat._id === updatedCategory._id
-        );
+      .addCase(updateCategory.fulfilled, (state, action) => {
+        state.updateCategoryApiState.isLoading = false;
+        state.updateCategoryApiState.lastFetched = Date.now();
+        const index = state.categories.findIndex(cat => cat._id === action.payload._id);
         if (index !== -1) {
-          state.categories[index] = updatedCategory;
+          state.categories[index] = action.payload;
         }
-        // Update current category if it's the same
-        if (state.currentCategory?._id === updatedCategory._id) {
-          state.currentCategory = updatedCategory;
+        // Update selected category if it's the one being updated
+        if (state.selectedCategory && state.selectedCategory._id === action.payload._id) {
+          state.selectedCategory = action.payload;
         }
-        state.error = null;
+        state.updateCategoryApiState.error = null;
       })
-      .addCase(updateCategoryThunk.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Failed to update category';
+      .addCase(updateCategory.rejected, (state, action) => {
+        state.updateCategoryApiState.isLoading = false;
+        state.updateCategoryApiState.error = action.payload as string;
       });
 
     // Delete Category
     builder
-      .addCase(deleteCategoryThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(deleteCategory.pending, (state) => {
+        state.deleteCategoryApiState.isLoading = true;
+        state.deleteCategoryApiState.error = null;
       })
-      .addCase(deleteCategoryThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-        // Remove from categories array using the category ID from the thunk argument
-        const deletedCategoryId = action.meta.arg;
-        state.categories = state.categories.filter(
-          (cat) => cat._id !== deletedCategoryId
-        );
-        state.totalCount = Math.max(0, state.totalCount - 1);
-        // Clear current category if it was the deleted one
-        if (state.currentCategory?._id === deletedCategoryId) {
-          state.currentCategory = null;
+      .addCase(deleteCategory.fulfilled, (state, action) => {
+        state.deleteCategoryApiState.isLoading = false;
+        state.deleteCategoryApiState.lastFetched = Date.now();
+        state.categories = state.categories.filter(cat => cat._id !== action.payload);
+        // Clear selected category if it was deleted
+        if (state.selectedCategory && state.selectedCategory._id === action.payload) {
+          state.selectedCategory = null;
         }
-        state.error = null;
+        state.deleteCategoryApiState.error = null;
       })
-      .addCase(deleteCategoryThunk.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Failed to delete category';
+      .addCase(deleteCategory.rejected, (state, action) => {
+        state.deleteCategoryApiState.isLoading = false;
+        state.deleteCategoryApiState.error = action.payload as string;
       });
   },
 });
 
-export const { clearCurrentCategory, clearError, clearCategories } = categorySlice.actions;
+export const { 
+  clearCreateCategoryError,
+  clearGetAllCategoriesError,
+  clearGetCategoryByIdError,
+  clearUpdateCategoryError,
+  clearDeleteCategoryError,
+  setSelectedCategory, 
+  clearSelectedCategory 
+} = categorySlice.actions;
 export default categorySlice.reducer;
+
 

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-native-toast-message": "^2.3.3",
+    "toastify-react-native": "^7.2.3"
+  }
+}

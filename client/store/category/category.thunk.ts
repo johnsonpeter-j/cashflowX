@@ -1,205 +1,139 @@
-import { API_BASE_URL, ApiResponse, Category, CategoryResponse, CategoriesResponse, CreateCategoryRequest, UpdateCategoryRequest } from '@/types/api';
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { RootState } from '../index';
-
-// Get token from state helper
-const getToken = (state: RootState): string | null => {
-  return state.auth.token;
-};
-
-// Create Category Thunk
-export const createCategoryThunk = createAsyncThunk<
-  CategoryResponse,
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import api from "@/lib/api";
+import { showToast } from "@/utils/toast";
+import {
   CreateCategoryRequest,
-  { rejectValue: string; state: RootState }
->('category/createCategory', async (data, { rejectWithValue, getState }) => {
-  try {
-    const token = getToken(getState());
-    if (!token) {
-      return rejectWithValue('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/category`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return rejectWithValue(result.message || 'Failed to create category');
-    }
-
-    if (!result.data || !result.data.category) {
-      return rejectWithValue('Invalid response from server');
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Create category error:', error);
-    return rejectWithValue(
-      'An error occurred while creating category. Please check your connection and try again.'
-    );
-  }
-});
-
-// Get All Categories Thunk
-export const getAllCategoriesThunk = createAsyncThunk<
+  UpdateCategoryRequest,
+  CategoryResponse,
   CategoriesResponse,
-  void,
-  { rejectValue: string; state: RootState }
->('category/getAllCategories', async (_, { rejectWithValue, getState }) => {
-  try {
-    const token = getToken(getState());
-    if (!token) {
-      return rejectWithValue('Authentication required');
+  DeleteCategoryResponse,
+} from "./category.types";
+
+// Create category thunk
+export const createCategory = createAsyncThunk(
+  'category/createCategory',
+  async (categoryData: CreateCategoryRequest, { rejectWithValue }) => {
+    try {
+      const response = await api.post<CategoryResponse>('/api/category', categoryData);
+      
+      if (response.data.success) {
+        showToast.success('Category created successfully');
+        return response.data.data.category;
+      } else {
+        const errorMsg = response.data.message || 'Failed to create category';
+        showToast.error(errorMsg);
+        return rejectWithValue(errorMsg);
+      }
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'An error occurred while creating category';
+      showToast.error(errorMessage);
+      return rejectWithValue(errorMessage);
     }
-
-    const response = await fetch(`${API_BASE_URL}/api/category`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return rejectWithValue(result.message || 'Failed to fetch categories');
-    }
-
-    if (!result.data || !result.data.categories) {
-      return rejectWithValue('Invalid response from server');
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Get all categories error:', error);
-    return rejectWithValue(
-      'An error occurred while fetching categories. Please check your connection and try again.'
-    );
   }
-});
+);
 
-// Get Category By ID Thunk
-export const getCategoryByIdThunk = createAsyncThunk<
-  CategoryResponse,
-  string,
-  { rejectValue: string; state: RootState }
->('category/getCategoryById', async (id, { rejectWithValue, getState }) => {
-  try {
-    const token = getToken(getState());
-    if (!token) {
-      return rejectWithValue('Authentication required');
+// Get all categories thunk
+export const getAllCategories = createAsyncThunk(
+  'category/getAllCategories',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get<CategoriesResponse>('/api/category');
+      
+      if (response.data.success) {
+        return response.data.data.categories;
+      } else {
+        const errorMsg = response.data.message || 'Failed to fetch categories';
+        showToast.error(errorMsg);
+        return rejectWithValue(errorMsg);
+      }
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'An error occurred while fetching categories';
+      showToast.error(errorMessage);
+      return rejectWithValue(errorMessage);
     }
-
-    const response = await fetch(`${API_BASE_URL}/api/category/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return rejectWithValue(result.message || 'Failed to fetch category');
-    }
-
-    if (!result.data || !result.data.category) {
-      return rejectWithValue('Invalid response from server');
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Get category by ID error:', error);
-    return rejectWithValue(
-      'An error occurred while fetching category. Please check your connection and try again.'
-    );
   }
-});
+);
 
-// Update Category Thunk
-export const updateCategoryThunk = createAsyncThunk<
-  CategoryResponse,
-  { id: string; data: UpdateCategoryRequest },
-  { rejectValue: string; state: RootState }
->('category/updateCategory', async ({ id, data }, { rejectWithValue, getState }) => {
-  try {
-    const token = getToken(getState());
-    if (!token) {
-      return rejectWithValue('Authentication required');
+// Get category by ID thunk
+export const getCategoryById = createAsyncThunk(
+  'category/getCategoryById',
+  async (categoryId: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get<CategoryResponse>(`/api/category/${categoryId}`);
+      
+      if (response.data.success) {
+        return response.data.data.category;
+      } else {
+        const errorMsg = response.data.message || 'Failed to fetch category';
+        showToast.error(errorMsg);
+        return rejectWithValue(errorMsg);
+      }
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'An error occurred while fetching category';
+      showToast.error(errorMessage);
+      return rejectWithValue(errorMessage);
     }
-
-    const response = await fetch(`${API_BASE_URL}/api/category/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return rejectWithValue(result.message || 'Failed to update category');
-    }
-
-    if (!result.data || !result.data.category) {
-      return rejectWithValue('Invalid response from server');
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Update category error:', error);
-    return rejectWithValue(
-      'An error occurred while updating category. Please check your connection and try again.'
-    );
   }
-});
+);
 
-// Delete Category Thunk
-export const deleteCategoryThunk = createAsyncThunk<
-  ApiResponse,
-  string,
-  { rejectValue: string; state: RootState }
->('category/deleteCategory', async (id, { rejectWithValue, getState }) => {
-  try {
-    const token = getToken(getState());
-    if (!token) {
-      return rejectWithValue('Authentication required');
+// Update category thunk
+export const updateCategory = createAsyncThunk(
+  'category/updateCategory',
+  async ({ id, data }: { id: string; data: UpdateCategoryRequest }, { rejectWithValue }) => {
+    try {
+      const response = await api.put<CategoryResponse>(`/api/category/${id}`, data);
+      
+      if (response.data.success) {
+        showToast.success('Category updated successfully');
+        return response.data.data.category;
+      } else {
+        const errorMsg = response.data.message || 'Failed to update category';
+        showToast.error(errorMsg);
+        return rejectWithValue(errorMsg);
+      }
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'An error occurred while updating category';
+      showToast.error(errorMessage);
+      return rejectWithValue(errorMessage);
     }
-
-    const response = await fetch(`${API_BASE_URL}/api/category/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return rejectWithValue(result.message || 'Failed to delete category');
-    }
-
-    return {
-      success: true,
-      message: result.message || 'Category deleted successfully',
-    };
-  } catch (error) {
-    console.error('Delete category error:', error);
-    return rejectWithValue(
-      'An error occurred while deleting category. Please check your connection and try again.'
-    );
   }
-});
+);
+
+// Delete category thunk
+export const deleteCategory = createAsyncThunk(
+  'category/deleteCategory',
+  async (categoryId: string, { rejectWithValue }) => {
+    try {
+      const response = await api.delete<DeleteCategoryResponse>(`/api/category/${categoryId}`);
+      
+      if (response.data.success) {
+        showToast.success('Category deleted successfully');
+        return categoryId;
+      } else {
+        const errorMsg = response.data.message || 'Failed to delete category';
+        showToast.error(errorMsg);
+        return rejectWithValue(errorMsg);
+      }
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'An error occurred while deleting category';
+      showToast.error(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 

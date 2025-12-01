@@ -1,76 +1,33 @@
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useFonts as useExpoFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
 import 'react-native-reanimated';
-
-import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
-import Toast from 'react-native-toast-message';
-import { toastConfig } from '@/config/toast.config';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { useAuthPersistence } from '@/hooks/use-auth-persistence';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete
-if (SplashScreen.preventAutoHideAsync) {
-  SplashScreen.preventAutoHideAsync();
-}
-
-function RootLayoutNav() {
-  const { theme } = useTheme();
+function AppContent() {
+  // Load and verify auth token on app start
+  useAuthPersistence();
 
   return (
-    <NavigationThemeProvider value={theme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(main-screen)" options={{ headerShown: false }} />
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="dashboard" />
+        <Stack.Screen name="(auth)" />
       </Stack>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-    </NavigationThemeProvider>
+      <StatusBar style="auto" />
+    </>
   );
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useExpoFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-  });
-
-  useEffect(() => {
-    async function hideSplashScreen() {
-      if (fontsLoaded || fontError) {
-        if (SplashScreen.hideAsync) {
-          await SplashScreen.hideAsync();
-        }
-      }
-    }
-
-    hideSplashScreen();
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
     <Provider store={store}>
-      <ThemeProvider>
-        <AuthProvider>
-          <RootLayoutNav />
-          <Toast config={toastConfig} position="top" topOffset={60} />
-        </AuthProvider>
-      </ThemeProvider>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </Provider>
   );
 }
