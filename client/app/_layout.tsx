@@ -1,33 +1,59 @@
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
 import { Provider } from 'react-redux';
-import { store } from '@/store';
-import { ToastProvider } from '@/contexts/ToastContext';
-import { useAuthPersistence } from '@/hooks/use-auth-persistence';
+import 'react-native-reanimated';
 
-function AppContent() {
-  // Load and verify auth token on app start
-  useAuthPersistence();
+import { ThemeProvider as CustomThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { store } from '@/store';
+
+export const unstable_settings = {
+  // Set initial route to auth group (this is the default route when app starts)
+  // The actual URL will be "/" not "/(auth)/index" because route groups don't appear in URLs
+  initialRouteName: '(auth)',
+};
+
+function RootLayoutContent() {
+  const { theme } = useTheme();
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="dashboard" />
-        <Stack.Screen name="(auth)" />
+    <ThemeProvider value={theme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen 
+          name="(auth)" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="modal" 
+          options={{ 
+            presentation: 'modal',
+            headerShown: false,
+          }} 
+        />
       </Stack>
-      <StatusBar style="auto" />
-    </>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+    </ThemeProvider>
   );
 }
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
+      <CustomThemeProvider>
+        <RootLayoutContent />
+      </CustomThemeProvider>
     </Provider>
   );
 }

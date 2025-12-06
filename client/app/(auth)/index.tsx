@@ -7,43 +7,30 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { signUp } from '@/store/auth/auth.thunk';
+import { signIn } from '@/store/auth/auth.thunk';
 import type { AppDispatch, RootState } from '@/store';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
 const maxWidth = isTablet ? 500 : width;
 
-export default function SignUpScreen() {
-  const [name, setName] = useState('');
+export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
   const insets = useSafeAreaInsets();
   
+  const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({ light: '#ddd', dark: '#333' }, 'background');
   const errorBorderColor = '#ef4444';
   const inputBgColor = useThemeColor({ light: '#fff', dark: '#1a1a1a' }, 'background');
   const buttonColor = useThemeColor({ light: '#0a7ea4', dark: '#0a7ea4' }, 'tint');
   const errorColor = '#ef4444';
-
-  const validateName = (nameValue: string): string => {
-    if (!nameValue.trim()) {
-      return 'Name is required';
-    }
-    if (nameValue.trim().length < 2) {
-      return 'Name must be at least 2 characters';
-    }
-    return '';
-  };
 
   const validateEmail = (emailValue: string): string => {
     if (!emailValue.trim()) {
@@ -60,27 +47,7 @@ export default function SignUpScreen() {
     if (!passwordValue) {
       return 'Password is required';
     }
-    if (passwordValue.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
     return '';
-  };
-
-  const validateConfirmPassword = (confirmPasswordValue: string, passwordValue: string): string => {
-    if (!confirmPasswordValue) {
-      return 'Please confirm your password';
-    }
-    if (confirmPasswordValue !== passwordValue) {
-      return 'Passwords do not match';
-    }
-    return '';
-  };
-
-  const handleNameChange = (value: string) => {
-    setName(value);
-    if (nameError) {
-      setNameError('');
-    }
   };
 
   const handleEmailChange = (value: string) => {
@@ -95,50 +62,34 @@ export default function SignUpScreen() {
     if (passwordError) {
       setPasswordError('');
     }
-    // Also validate confirm password if it has a value
-    if (confirmPassword && confirmPasswordError) {
-      const confirmErr = validateConfirmPassword(confirmPassword, value);
-      setConfirmPasswordError(confirmErr);
-    }
   };
 
-  const handleConfirmPasswordChange = (value: string) => {
-    setConfirmPassword(value);
-    if (confirmPasswordError) {
-      setConfirmPasswordError('');
-    }
-  };
-
-  const handleSignUp = async () => {
-    // Validate all fields
-    const nameErr = validateName(name);
+  const handleSignIn = async () => {
+    // Validate fields
     const emailErr = validateEmail(email);
     const passwordErr = validatePassword(password);
-    const confirmPasswordErr = validateConfirmPassword(confirmPassword, password);
 
-    setNameError(nameErr);
     setEmailError(emailErr);
     setPasswordError(passwordErr);
-    setConfirmPasswordError(confirmPasswordErr);
 
     // If there are validation errors, don't proceed
-    if (nameErr || emailErr || passwordErr || confirmPasswordErr) {
+    if (emailErr || passwordErr) {
       return;
     }
 
     try {
-      await dispatch(signUp({ name, email, password, confirmPassword })).unwrap();
-      
+      await dispatch(signIn({ email, password })).unwrap();
+      router.replace('/(tabs)' as any);
     } catch (err) {
-      // Handle API errors - could be email/name specific
+      // Handle API errors - could be email/password specific
       const errorMessage = error || 'An error occurred';
-      if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('already exists')) {
+      if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('invalid')) {
         setEmailError(errorMessage);
-      } else if (errorMessage.toLowerCase().includes('name')) {
-        setNameError(errorMessage);
+      } else if (errorMessage.toLowerCase().includes('password')) {
+        setPasswordError(errorMessage);
       } else {
-        // General error
-        setEmailError(errorMessage);
+        // General error - could show as a general error or on both fields
+        setPasswordError(errorMessage);
       }
     }
   };
@@ -155,35 +106,7 @@ export default function SignUpScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.content, { maxWidth }]}>
-          <ThemedText type="title" style={styles.title}>Sign Up</ThemedText>
-          
-          <View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: inputBgColor,
-                  borderColor: nameError ? errorBorderColor : borderColor,
-                  color: textColor,
-                }
-              ]}
-              placeholder="Name"
-              placeholderTextColor={useThemeColor({ light: '#999', dark: '#666' }, 'icon')}
-              value={name}
-              onChangeText={handleNameChange}
-              autoCapitalize="words"
-              autoCorrect={false}
-            />
-            <View style={styles.errorContainer}>
-              {nameError ? (
-                <Text style={[styles.errorText, { color: errorColor }]}>
-                  {nameError}
-                </Text>
-              ) : (
-                <View style={styles.errorPlaceholder} />
-              )}
-            </View>
-          </View>
+          <ThemedText type="title" style={styles.title}>Sign In</ThemedText>
           
           <View>
             <TextInput
@@ -245,35 +168,13 @@ export default function SignUpScreen() {
             </View>
           </View>
 
-          <View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: inputBgColor,
-                  borderColor: confirmPasswordError ? errorBorderColor : borderColor,
-                  color: textColor,
-                }
-              ]}
-              placeholder="Confirm Password"
-              placeholderTextColor={useThemeColor({ light: '#999', dark: '#666' }, 'icon')}
-              value={confirmPassword}
-              onChangeText={handleConfirmPasswordChange}
-              secureTextEntry
-              autoCapitalize="none"
-              autoComplete="password"
-              autoCorrect={false}
-            />
-            <View style={styles.errorContainer}>
-              {confirmPasswordError ? (
-                <Text style={[styles.errorText, { color: errorColor }]}>
-                  {confirmPasswordError}
-                </Text>
-              ) : (
-                <View style={styles.errorPlaceholder} />
-              )}
-            </View>
-          </View>
+          <TouchableOpacity 
+            style={styles.forgotPasswordLink}
+            onPress={() => router.push('./forgot-password')} 
+            activeOpacity={0.7}
+          >
+            <ThemedText type="link">Forgot Password?</ThemedText>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[
@@ -281,23 +182,20 @@ export default function SignUpScreen() {
               { backgroundColor: buttonColor },
               isLoading && styles.buttonDisabled
             ]}
-            onPress={handleSignUp}
+            onPress={handleSignIn}
             disabled={isLoading}
             activeOpacity={0.8}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <ThemedText style={styles.buttonText}>Sign Up</ThemedText>
+              <ThemedText style={styles.buttonText}>Sign In</ThemedText>
             )}
           </TouchableOpacity>
 
           <View style={styles.links}>
-            <TouchableOpacity 
-              onPress={() => router.push('/' as any)} 
-              activeOpacity={0.7}
-            >
-              <ThemedText type="link">Already have an account? Sign In</ThemedText>
+            <TouchableOpacity onPress={() => router.push('./sign-up')} activeOpacity={0.7}>
+              <ThemedText type="link">Don't have an account? Sign Up</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -353,7 +251,6 @@ const styles = StyleSheet.create({
     minHeight: 20,
     marginTop: 4,
     paddingHorizontal: 4,
-    marginBottom: 12,
   },
   errorText: {
     fontSize: 14,
@@ -362,10 +259,14 @@ const styles = StyleSheet.create({
   errorPlaceholder: {
     height: 20,
   },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+  },
   button: {
     paddingVertical: isTablet ? 18 : 15,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop: 10,
     ...Platform.select({
       ios: {
         shadowColor: '#0a7ea4',
@@ -389,5 +290,6 @@ const styles = StyleSheet.create({
   links: {
     marginTop: 24,
     alignItems: 'center',
+    gap: 12,
   },
 });

@@ -5,23 +5,14 @@ export interface User {
     email: string;
     profileImageUrl: string | null;
   }
-
-  // API state interface for individual API calls
-  export interface ApiState {
-    isLoading: boolean;
-    error: string | null;
-    lastFetched: number | null;
-  }
   
   // Auth state interface
   export interface AuthState {
     user: User | null;
     token: string | null;
     isAuthenticated: boolean;
-    signInApiState: ApiState;
-    signUpApiState: ApiState;
-    forgotPasswordApiState: ApiState;
-    verifyTokenApiState: ApiState;
+    isLoading: boolean;
+    error: string | null;
   }
   
   // Sign in request payload

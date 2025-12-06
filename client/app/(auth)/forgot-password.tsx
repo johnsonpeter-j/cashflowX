@@ -1,138 +1,155 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
-import { router } from 'expo-router';
-import { ThemedView } from '@/components/themed-view';
+import { useState } from 'react';
+import { View, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Dimensions, ScrollView, Platform, Text } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
-import { AuthInput } from '@/components/auth-input';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { ThemedView } from '@/components/themed-view';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { forgotPassword } from '@/store/auth/auth.thunk';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
+import type { AppDispatch, RootState } from '@/store';
+
+const { width } = Dimensions.get('window');
+const isTablet = width >= 768;
+const maxWidth = isTablet ? 500 : width;
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [errors, setErrors] = useState<{ email?: string }>({});
+  const [emailError, setEmailError] = useState('');
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  const insets = useSafeAreaInsets();
+  
+  const textColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({ light: '#ddd', dark: '#333' }, 'background');
+  const errorBorderColor = '#ef4444';
+  const inputBgColor = useThemeColor({ light: '#fff', dark: '#1a1a1a' }, 'background');
+  const buttonColor = useThemeColor({ light: '#0a7ea4', dark: '#0a7ea4' }, 'tint');
+  const errorColor = '#ef4444';
 
-  const dispatch = useAppDispatch();
-  const { forgotPasswordApiState } = useAppSelector((state) => state.auth);
-  const colorScheme = useColorScheme() ?? 'light';
-  const theme = Colors[colorScheme];
-
-  const validate = () => {
-    const newErrors: { email?: string } = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+  const validateEmail = (emailValue: string): string => {
+    if (!emailValue.trim()) {
+      return 'Email is required';
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailValue)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (emailError) {
+      setEmailError('');
+    }
   };
 
   const handleForgotPassword = async () => {
-    if (!validate()) return;
+    // Validate email
+    const emailErr = validateEmail(email);
+    setEmailError(emailErr);
+
+    // If there are validation errors, don't proceed
+    if (emailErr) {
+      return;
+    }
 
     try {
       await dispatch(forgotPassword({ email })).unwrap();
-      // Optionally navigate back or show success message
-      setTimeout(() => {
-        router.back();
-      }, 2000);
-    } catch (error) {
-      // Error is handled by toast in thunk
+      Alert.alert(
+        'Success',
+        'If the email exists, a temporary password has been sent',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.push('/(auth)/index' as any),
+          },
+        ]
+      );
+    } catch (err) {
+      // Handle API errors
+      const errorMessage = error || 'An error occurred';
+      setEmailError(errorMessage);
     }
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+    <ThemedView style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={styles.header}>
+        <ThemeToggle />
+      </View>
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('@/assets/images/logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-
-          <View style={styles.formContainer}>
-            <ThemedText type="title" style={styles.title}>
-              Forgot Password?
-            </ThemedText>
-            <ThemedText style={styles.subtitle}>
-              Enter your email address and we'll send you a link to reset your password.
-            </ThemedText>
-
-            <View style={styles.inputContainer}>
-              <AuthInput
-                label="Email"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (errors.email) setErrors({ ...errors, email: undefined });
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                error={errors.email}
-                showValidIcon={true}
-              />
-            </View>
-
-            <TouchableOpacity
+        <View style={[styles.content, { maxWidth }]}>
+          <ThemedText type="title" style={styles.title}>Forgot Password</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Enter your email address and we'll send you a temporary password.
+          </ThemedText>
+          
+          <View>
+            <TextInput
               style={[
-                styles.resetButton,
+                styles.input,
                 {
-                  backgroundColor: theme.tint,
-                  opacity: forgotPasswordApiState.isLoading ? 0.7 : 1,
-                },
+                  backgroundColor: inputBgColor,
+                  borderColor: emailError ? errorBorderColor : borderColor,
+                  color: textColor,
+                }
               ]}
-              onPress={handleForgotPassword}
-              disabled={forgotPasswordApiState.isLoading}
-            >
-              {forgotPasswordApiState.isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
+              placeholder="Email"
+              placeholderTextColor={useThemeColor({ light: '#999', dark: '#666' }, 'icon')}
+              value={email}
+              onChangeText={handleEmailChange}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+            />
+            <View style={styles.errorContainer}>
+              {emailError ? (
+                <Text style={[styles.errorText, { color: errorColor }]}>
+                  {emailError}
+                </Text>
               ) : (
-                <ThemedText
-                  style={[
-                    styles.resetButtonText,
-                    { color: colorScheme === 'dark' ? '#000' : '#FFF' },
-                  ]}
-                >
-                  Send Reset Link
-                </ThemedText>
+                <View style={styles.errorPlaceholder} />
               )}
-            </TouchableOpacity>
-
-            <View style={styles.backContainer}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <ThemedText style={styles.backText}>
-                  ← Back to Sign In
-                </ThemedText>
-              </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              { backgroundColor: buttonColor },
+              isLoading && styles.buttonDisabled
+            ]}
+            onPress={handleForgotPassword}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <ThemedText style={styles.buttonText}>Send Reset Link</ThemedText>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.links}>
+            <TouchableOpacity 
+              onPress={() => router.push('/' as any)} 
+              activeOpacity={0.7}
+            >
+              <ThemedText type="link">Back to Sign In</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -141,60 +158,91 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 10 : 20,
+    paddingBottom: 10,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-  },
-  formContainer: {
+  content: {
     width: '100%',
-    maxWidth: 400,
     alignSelf: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 10,
     textAlign: 'center',
+    fontSize: isTablet ? 40 : 32,
   },
   subtitle: {
-    fontSize: 16,
-    marginBottom: 32,
+    marginBottom: 30,
     textAlign: 'center',
     opacity: 0.7,
+    fontSize: isTablet ? 18 : 16,
+    paddingHorizontal: 20,
   },
-  inputContainer: {
-    width: '100%',
+  input: {
+    height: isTablet ? 56 : 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: isTablet ? 18 : 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  resetButton: {
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
+  errorContainer: {
+    minHeight: 20,
+    marginTop: 4,
+    paddingHorizontal: 4,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  errorPlaceholder: {
+    height: 20,
+  },
+  button: {
+    paddingVertical: isTablet ? 18 : 15,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0a7ea4',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  resetButtonText: {
-    fontSize: 16,
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: isTablet ? 18 : 16,
     fontWeight: '600',
   },
-  backContainer: {
+  links: {
+    marginTop: 24,
     alignItems: 'center',
   },
-  backText: {
-    fontSize: 14,
-    opacity: 0.8,
-  },
 });
-
-

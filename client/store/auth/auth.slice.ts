@@ -1,33 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { forgotPassword, signIn, signUp, verifyToken } from "./auth.thunk";
 import { AuthState } from "./auth.types";
-import { storage } from "@/utils/storage";
 
 // Initial state
 const initialState: AuthState = {
     user: null,
     token: null,
     isAuthenticated: false,
-    signInApiState: {
-      isLoading: false,
-      error: null,
-      lastFetched: null,
-    },
-    signUpApiState: {
-      isLoading: false,
-      error: null,
-      lastFetched: null,
-    },
-    forgotPasswordApiState: {
-      isLoading: false,
-      error: null,
-      lastFetched: null,
-    },
-    verifyTokenApiState: {
-      isLoading: false,
-      error: null,
-      lastFetched: null,
-    },
+    isLoading: false,
+    error: null,
+    signInApiState:{
+        isLoading: false,
+        error: null,
+        lastRequestTime: null,
+    }
   };
   
   
@@ -41,129 +27,91 @@ const initialState: AuthState = {
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
-        // Clear all API errors
-        state.signInApiState.error = null;
-        state.signUpApiState.error = null;
-        state.forgotPasswordApiState.error = null;
-        state.verifyTokenApiState.error = null;
-        // Clear token from storage
-        storage.clearAuth().catch((error) => {
-          console.error('Error clearing auth storage:', error);
-        });
+        state.error = null;
+        // TODO: Clear token from storage (AsyncStorage/SecureStore)
       },
-      clearSignInError: (state) => {
-        state.signInApiState.error = null;
-      },
-      clearSignUpError: (state) => {
-        state.signUpApiState.error = null;
-      },
-      clearForgotPasswordError: (state) => {
-        state.forgotPasswordApiState.error = null;
-      },
-      clearVerifyTokenError: (state) => {
-        state.verifyTokenApiState.error = null;
+      clearError: (state) => {
+        state.error = null;
       },
       setCredentials: (state, action: PayloadAction<{ user: AuthState['user']; token: string }>) => {
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        state.error = null;
       },
     },
     extraReducers: (builder) => {
       // Sign In
       builder
         .addCase(signIn.pending, (state) => {
-          state.signInApiState.isLoading = true;
-          state.signInApiState.error = null;
+          state.isLoading = true;
+          state.error = null;
         })
         .addCase(signIn.fulfilled, (state, action) => {
-          state.signInApiState.isLoading = false;
-          state.signInApiState.lastFetched = Date.now();
+          state.isLoading = false;
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
-          state.signInApiState.error = null;
-          // Save token and user to storage
-          storage.saveToken(action.payload.token).catch((error) => {
-            console.error('Error saving token:', error);
-          });
-          storage.saveUser(action.payload.user).catch((error) => {
-            console.error('Error saving user:', error);
-          });
+          state.error = null;
+          // TODO: Save token to storage (AsyncStorage/SecureStore)
         })
         .addCase(signIn.rejected, (state, action) => {
-          state.signInApiState.isLoading = false;
-          state.signInApiState.error = action.payload as string;
+          state.isLoading = false;
+          state.error = action.payload as string;
           state.isAuthenticated = false;
         });
   
       // Sign Up
       builder
         .addCase(signUp.pending, (state) => {
-          state.signUpApiState.isLoading = true;
-          state.signUpApiState.error = null;
+          state.isLoading = true;
+          state.error = null;
         })
         .addCase(signUp.fulfilled, (state, action) => {
-          state.signUpApiState.isLoading = false;
-          state.signUpApiState.lastFetched = Date.now();
+          state.isLoading = false;
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
-          state.signUpApiState.error = null;
-          // Save token and user to storage
-          storage.saveToken(action.payload.token).catch((error) => {
-            console.error('Error saving token:', error);
-          });
-          storage.saveUser(action.payload.user).catch((error) => {
-            console.error('Error saving user:', error);
-          });
+          state.error = null;
+          // TODO: Save token to storage (AsyncStorage/SecureStore)
         })
         .addCase(signUp.rejected, (state, action) => {
-          state.signUpApiState.isLoading = false;
-          state.signUpApiState.error = action.payload as string;
+          state.isLoading = false;
+          state.error = action.payload as string;
           state.isAuthenticated = false;
         });
   
       // Forgot Password
       builder
         .addCase(forgotPassword.pending, (state) => {
-          state.forgotPasswordApiState.isLoading = true;
-          state.forgotPasswordApiState.error = null;
+          state.isLoading = true;
+          state.error = null;
         })
         .addCase(forgotPassword.fulfilled, (state) => {
-          state.forgotPasswordApiState.isLoading = false;
-          state.forgotPasswordApiState.lastFetched = Date.now();
-          state.forgotPasswordApiState.error = null;
+          state.isLoading = false;
+          state.error = null;
         })
         .addCase(forgotPassword.rejected, (state, action) => {
-          state.forgotPasswordApiState.isLoading = false;
-          state.forgotPasswordApiState.error = action.payload as string;
+          state.isLoading = false;
+          state.error = action.payload as string;
         });
   
       // Verify Token
       builder
         .addCase(verifyToken.pending, (state) => {
-          state.verifyTokenApiState.isLoading = true;
-          state.verifyTokenApiState.error = null;
+          state.isLoading = true;
+          state.error = null;
         })
         .addCase(verifyToken.fulfilled, (state, action) => {
-          state.verifyTokenApiState.isLoading = false;
-          state.verifyTokenApiState.lastFetched = Date.now();
+          state.isLoading = false;
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
-          state.verifyTokenApiState.error = null;
-          // Save token and user to storage
-          storage.saveToken(action.payload.token).catch((error) => {
-            console.error('Error saving token:', error);
-          });
-          storage.saveUser(action.payload.user).catch((error) => {
-            console.error('Error saving user:', error);
-          });
+          state.error = null;
         })
         .addCase(verifyToken.rejected, (state, action) => {
-          state.verifyTokenApiState.isLoading = false;
-          state.verifyTokenApiState.error = action.payload as string;
+          state.isLoading = false;
+          state.error = action.payload as string;
           state.isAuthenticated = false;
           state.user = null;
           state.token = null;
@@ -171,12 +119,5 @@ const initialState: AuthState = {
     },
   });
   
-  export const { 
-    logout, 
-    clearSignInError, 
-    clearSignUpError, 
-    clearForgotPasswordError, 
-    clearVerifyTokenError, 
-    setCredentials 
-  } = authSlice.actions;
+  export const { logout, clearError, setCredentials } = authSlice.actions;
   export default authSlice.reducer;
